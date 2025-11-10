@@ -24,7 +24,7 @@ import net.skirata3222.lavalogging.util.Lavaloggable;
 
 public class Lavalogging implements ModInitializer {
 
-	public static final String MOD_ID = "lavaloggingv1";
+	public static final String MOD_ID = "lavalogging";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	@Override
@@ -36,7 +36,7 @@ public class Lavalogging implements ModInitializer {
 			new SimpleResourceReloadListener<Set<Identifier>>() {
 				@Override
 				public Identifier getFabricId() {
-					return Identifier.of("lavaloggingv1", "server_blocklist");
+					return Identifier.of("lavalogging", "server_blocklist");
 				}
 				@Override
 				public CompletableFuture<Set<Identifier>> load(ResourceManager manager, Executor executor) {
@@ -56,7 +56,7 @@ public class Lavalogging implements ModInitializer {
 			new SimpleResourceReloadListener<Set<Identifier>>() {
 				@Override
 				public Identifier getFabricId() {
-					return Identifier.of("lavaloggingv1", "client_blocklist");
+					return Identifier.of("lavalogging", "client_blocklist");
 				}
 				@Override
 				public CompletableFuture<Set<Identifier>> load(ResourceManager manager, Executor executor) {

@@ -16,13 +16,13 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.skirata3222.lavalogging.LavaloggingV1"
+			"net.skirata3222.lavalogging.Lavalogging"
 		],
 		"fabric-datagen": [
-			"net.skirata3222.lavalogging.LavaloggingV1DataGenerator"
+			"net.skirata3222.lavalogging.LavaloggingDataGenerator"
 		],
 		"client": [
-			"net.skirata3222.lavalogging.LavaloggingV1Client"
+			"net.skirata3222.lavalogging.LavaloggingClient"
 		]
 	},
 	"mixins": [
