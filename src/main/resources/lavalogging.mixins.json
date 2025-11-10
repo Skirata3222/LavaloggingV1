@@ -1,0 +1,26 @@
+{
+	"required": true,
+	"package": "net.skirata3222.lavaloggingv1.mixin",
+	"refmap": "lavalogging.refmap.json",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"AbstractBlockMixin",
+		"AbstractBlockStateMixin",
+		"AnvilMixin",
+		"BlockAccessor",
+		"BucketItemMixin",
+		"CopperGrateMixin",
+		"FallingBlockMixin",
+		"FenceBlockMixin",
+		"HorizontalConnectingBlockMixin",
+		"IronBarsMixin",
+		"ItemInvoker",
+		"PointedDripstoneMixin",
+		"SlabBlockMixin",
+		"StairsBlockMixin",
+		"WallBlockMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

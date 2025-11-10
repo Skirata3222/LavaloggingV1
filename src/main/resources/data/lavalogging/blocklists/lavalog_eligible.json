@@ -1,0 +1,14 @@
+{
+	"values": [
+		"minecraft:stone_slab",
+		"minecraft:stone_stairs",
+		"minecraft:cobblestone_wall",
+		"minecraft:nether_brick_fence",
+		"minecraft:pointed_dripstone",
+		"minecraft:anvil",
+		"minecraft:damaged_anvil",
+		"minecraft:chipped_anvil",
+		"minecraft:copper_grate",
+		"minecraft:iron_bars"
+	]
+}
