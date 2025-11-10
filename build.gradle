@@ -36,7 +36,7 @@ dependencies {
 loom {
 	mixin {
 		useLegacyMixinAp = true
-		defaultRefmapName = "lavaloggingv1.refmap.json"
+		defaultRefmapName = "lavalogging.refmap.json"
 	}
 }
 
