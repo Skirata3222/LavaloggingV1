@@ -7,95 +7,89 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.minecraft.advancement.criterion.Criteria;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.FluidFillable;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.BucketItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsage;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlockContainer;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
-import net.skirata3222.lavalogging.util.Lavaloggable;
+import net.skirata3222.lavalogging.util.LavalogPropUtil;
 
 @Mixin(BucketItem.class)
 public abstract class BucketItemMixin {
 
 	@Shadow
-	protected abstract void playEmptyingSound(@Nullable PlayerEntity player, WorldAccess world, BlockPos pos);
-	
+	protected abstract void playEmptySound(@Nullable LivingEntity player, LevelAccessor level, BlockPos pos);
 
 	@Inject(method = "use", at = @At("HEAD"), cancellable = true)
-	private void injectLavaUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
-		ItemStack itemStack = user.getStackInHand(hand);
+	private void injectLavaUse(Level level, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+		BucketItem self = (BucketItem)(Object)this;
+		Fluid fluid = self.getContent();
+		BlockHitResult hit = ItemRaycastInvoker.invokeRaycast(level, user, fluid == Fluids.EMPTY ? ClipContext.Fluid.SOURCE_ONLY : ClipContext.Fluid.NONE);
+		if (hit.getType() != HitResult.Type.BLOCK) {
+			return;
+		}
+		BlockPos pos = hit.getBlockPos();
+		BlockState state = level.getBlockState(pos);
+		Block block = state.getBlock();
 
-		if (itemStack.getItem() == Items.LAVA_BUCKET) {
-			BlockHitResult hit = ItemInvoker.callRaycast(world, user, RaycastContext.FluidHandling.NONE);
-			if (hit.getType() == HitResult.Type.BLOCK) {
-				BlockPos pos = hit.getBlockPos();
-				BlockState state = world.getBlockState(pos);
-				Block block = state.getBlock();
-				BlockPos adjacent = pos.offset(hit.getSide());
-				BlockState adjState = world.getBlockState(adjacent);
-				Block adjBlock = adjState.getBlock();
-				if ((block instanceof FluidFillable block2) && block2.canFillWithFluid(user, world, pos, state, Fluids.LAVA)) {
-					if (block2.tryFillWithFluid(world, pos, state, Fluids.LAVA.getDefaultState())) {
-						this.playEmptyingSound(user,world,pos);
-						((BucketItem)(Object)this).onEmptied(user, world, itemStack, pos);
-						if (user instanceof ServerPlayerEntity) {
-							Criteria.PLACED_BLOCK.trigger((ServerPlayerEntity)user, pos, itemStack);
-						}
-						user.incrementStat(Stats.USED.getOrCreateStat((BucketItem)(Object)this));
-						ItemStack itemStack2 = ItemUsage.exchangeStack(itemStack, user, BucketItem.getEmptiedStack(itemStack,user));
-						cir.setReturnValue(ActionResult.SUCCESS.withNewHandStack(itemStack2));
-						return;
-					}
-				} else if ((adjBlock instanceof FluidFillable block3) && block3.canFillWithFluid(user, world, adjacent, adjState, Fluids.LAVA)){
-					// if the block clicked isn't fluidfillable, check if the adjacent block is
-					if (block3.tryFillWithFluid(world, adjacent, adjState, Fluids.LAVA.getDefaultState())) {
-						this.playEmptyingSound(user,world,adjacent);
-						((BucketItem)(Object)this).onEmptied(user, world, itemStack, adjacent);
-						if (user instanceof ServerPlayerEntity) {
-							Criteria.PLACED_BLOCK.trigger((ServerPlayerEntity)user, adjacent, itemStack);
-						}
-						user.incrementStat(Stats.USED.getOrCreateStat((BucketItem)(Object)this));
-						ItemStack itemStack2 = ItemUsage.exchangeStack(itemStack, user, BucketItem.getEmptiedStack(itemStack,user));
-						cir.setReturnValue(ActionResult.SUCCESS.withNewHandStack(itemStack2));
-						return;
-					}
+		if (fluid == Fluids.LAVA && state.hasProperty(LavalogPropUtil.LAVALOGGED) && state.getValue(LavalogPropUtil.LAVALOGGED)) {
+			cir.setReturnValue(InteractionResult.FAIL);
+			return;
+		}
+		if (fluid == Fluids.LAVA && (block instanceof LiquidBlockContainer block2) && block2.canPlaceLiquid(user, level, pos, state, fluid)) {
+
+			if (!level.isClientSide()) {
+				level.setBlock(pos, state.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
+				level.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(level));
+			}
+			if (!user.getAbilities().instabuild) {
+				user.setItemInHand(hand, new ItemStack(Items.BUCKET));
+			}
+			
+			((BucketItemInvoker)(Object)this).invokePlayEmptySound(user, level, pos);
+
+			cir.setReturnValue(InteractionResult.SUCCESS);
+			return;
+		}
+
+		if (fluid == Fluids.WATER
+				&& state.hasProperty(LavalogPropUtil.LAVALOGGED)
+				&& state.getValue(LavalogPropUtil.LAVALOGGED)) {
+			cir.setReturnValue(InteractionResult.FAIL);
+			return;
+		}
+
+		if (self.getContent() == Fluids.EMPTY
+		&& state.hasProperty(LavalogPropUtil.LAVALOGGED)
+		&& state.getValue(LavalogPropUtil.LAVALOGGED)) {
+
+			if (!level.isClientSide()) {
+				level.setBlock(pos, state.setValue(LavalogPropUtil.LAVALOGGED, false), 3);
+				if (!user.getAbilities().instabuild) {
+					user.setItemInHand(hand, new ItemStack(Items.LAVA_BUCKET));
 				}
 			}
+			level.playSound(user,pos,SoundEvents.BUCKET_FILL_LAVA,SoundSource.BLOCKS,1.0F,1.0F);
+			cir.setReturnValue(InteractionResult.SUCCESS);
+			return;
 		}
-		if (itemStack.getItem() == Items.WATER_BUCKET) {
-			BlockHitResult hit = ItemInvoker.callRaycast(world, user, RaycastContext.FluidHandling.NONE);
-			if (hit.getType() == HitResult.Type.BLOCK) {
-				Boolean fail1 = false;
-				Boolean fail2 = false;
-				BlockPos pos = hit.getBlockPos();
-				BlockState state = world.getBlockState(pos);
-				BlockPos adjacent = pos.offset(hit.getSide());
-				BlockState adjState = world.getBlockState(adjacent);
-				if (state.contains(Lavaloggable.LAVALOGGED) && state.get(Lavaloggable.LAVALOGGED)) fail1 = true;
-				if (adjState.contains(Lavaloggable.LAVALOGGED)  && adjState.get(Lavaloggable.LAVALOGGED)) fail2=true;
-				if (fail1 && fail2) {
-					// if both the clicked block AND the block next to it where the water would otherwise go are lavalogged, just don't place the water
-					cir.setReturnValue(ActionResult.FAIL);
-					return;
-				}
-			}
-		}
+
 	}
-
+	
 }

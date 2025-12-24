@@ -7,8 +7,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(Block.class)
-public interface BlockAccessor {
-	@Invoker("registerDefaultState")
-	void invokeRegisterDefaultState(BlockState state);
+public interface BlockInvoker {
+    
+    @Invoker("registerDefaultState")
+    void invokeRegisterDefaultState(BlockState state);
 
 }

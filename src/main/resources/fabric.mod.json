@@ -3,13 +3,13 @@
 	"id": "lavalogging",
 	"version": "${version}",
 	"name": "Lavalogging",
-	"description": "Mod that hopefully adds lavalagging to certain waterloggable blocks (specifically, fireproof ones).",
+	"description": "Adds Lavalogging to vanilla waterloggable blocks, and to anvils. Specific blocks can be controlled via config file.",
 	"authors": [
 		"Skirata3222"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://modrinth.com/mod/lavaloggable",
+		"sources": "https://github.com/Skirata3222/LavaloggingV1"
 	},
 	"license": "MIT",
 	"icon": "assets/lavalogging/LavaloggingIcon.png",
@@ -18,19 +18,20 @@
 		"main": [
 			"net.skirata3222.lavalogging.Lavalogging"
 		],
-		"fabric-datagen": [
-			"net.skirata3222.lavalogging.LavaloggingDataGenerator"
-		],
 		"client": [
 			"net.skirata3222.lavalogging.LavaloggingClient"
 		]
 	},
 	"mixins": [
-		"lavalogging.mixins.json"
+		"lavalogging.mixins.json",
+		{
+			"config": "lavalogging.client.mixins.json",
+			"environment": "client"
+		}
 	],
 	"depends": {
 		"fabricloader": ">=0.18.1",
-		"minecraft": "1.21.10",
+		"minecraft": "~1.21.10",
 		"java": ">=21",
 		"fabric-api": "*"
 	},

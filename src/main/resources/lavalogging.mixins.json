@@ -4,23 +4,19 @@
 	"refmap": "lavalogging.refmap.json",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"AbstractBlockMixin",
-		"AbstractBlockStateMixin",
-		"AnvilMixin",
 		"BlockAccessor",
+		"BlockInvoker",
+		"BucketItemInvoker",
 		"BucketItemMixin",
-		"CopperGrateMixin",
-		"FallingBlockMixin",
-		"FenceBlockMixin",
-		"HorizontalConnectingBlockMixin",
-		"IronBarsMixin",
-		"ItemInvoker",
-		"PointedDripstoneMixin",
+		"ItemRaycastInvoker",
 		"SlabBlockMixin",
-		"StairsBlockMixin",
+		"StairBlockMixin",
 		"WallBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
 	}
 }

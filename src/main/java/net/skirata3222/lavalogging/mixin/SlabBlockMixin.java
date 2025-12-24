@@ -2,174 +2,134 @@ package net.skirata3222.lavalogging.mixin;
 
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.util.math.Direction;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.state.property.Properties;
-import net.minecraft.state.property.Property;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.WorldAccess;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.tick.ScheduledTickView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BucketPickup;
+import net.minecraft.world.level.block.LiquidBlockContainer;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 
-import net.skirata3222.lavalogging.util.BlockListRegistry;
-import net.skirata3222.lavalogging.util.Lavaloggable;
+import net.skirata3222.lavalogging.util.LavalogConfigLoader;
+import net.skirata3222.lavalogging.util.LavalogPropUtil;
 
 @Mixin(SlabBlock.class)
-public abstract class SlabBlockMixin implements Lavaloggable{
-	
-	@ModifyArgs(
-		method = "appendProperties", 
-		at = @At(
-			value = "INVOKE", 
-			target = "Lnet/minecraft/state/StateManager$Builder;add([Lnet/minecraft/state/property/Property;)Lnet/minecraft/state/StateManager$Builder;"
-		)
-	)
-	private void modifyAppendPropertiesArgs(Args args) {
-		Property<?>[] original = args.get(0);
-		// Find WATERLOGGED’s index
-		int waterIdx = -1;
-		for (int i = 0; i < original.length; i++) {
-			if (original[i] == Properties.WATERLOGGED) {
-				waterIdx = i;
-				break;
-			}
-		}
-		Property<?>[] extended = new Property[original.length + 1];
+public abstract class SlabBlockMixin implements LiquidBlockContainer, BucketPickup {
 
-		if (waterIdx >= 0) {
-			// Copy everything up to WATERLOGGED
-			System.arraycopy(original, 0, extended, 0, waterIdx + 1);
-			// Insert LAVALOGGED right after WATERLOGGED
-			extended[waterIdx + 1] = Lavaloggable.LAVALOGGED;
-			System.arraycopy(original, waterIdx + 1, extended, waterIdx + 2, original.length - (waterIdx + 1));
-		} else {
-			// Fallback: just append at the end
-			System.arraycopy(original, 0, extended, 0, original.length);
-			extended[original.length] = Lavaloggable.LAVALOGGED;
-		}
-		args.set(0, extended);
+	@Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
+	private void addLavaloggedProperty(StateDefinition.Builder<Block,BlockState> builder, CallbackInfo ci) {
+		builder.add(LavalogPropUtil.LAVALOGGED);
 	}
 
-	@Inject(method = "getPlacementState", at = @At("RETURN"), cancellable = true)
-	private void injectLavaPlacement(ItemPlacementContext ctx, CallbackInfoReturnable<BlockState> cir) {
-		BlockState state = cir.getReturnValue();
-		FluidState fluidState = ctx.getWorld().getFluidState(ctx.getBlockPos());
-		if (fluidState.getFluid() == Fluids.LAVA && state.contains(LAVALOGGED) && BlockListRegistry.isAllowed(state.getBlock())) {
-			cir.setReturnValue(state.with(LAVALOGGED, true));
+	@Inject(method = "<init>", at = @At("TAIL"))
+	private void injectDefaultState(BlockBehaviour.Properties properties, CallbackInfo ci) {
+		SlabBlock self = (SlabBlock)(Object)this;
+		((BlockInvoker)self).invokeRegisterDefaultState(
+			self.defaultBlockState()
+				.setValue(SlabBlock.TYPE, SlabType.BOTTOM)
+				.setValue(SlabBlock.WATERLOGGED, false)
+				.setValue(LavalogPropUtil.LAVALOGGED, false)
+		);
+	}
+
+	@Inject(method = "getStateForPlacement", at = @At("RETURN"), cancellable = true)
+	private void injectLavaPlacement(BlockPlaceContext ctx, CallbackInfoReturnable<BlockState> cir) {
+		
+		BlockState newState = cir.getReturnValue();
+		Level level = ctx.getLevel();
+		BlockPos pos = ctx.getClickedPos();
+		BlockState existing = level.getBlockState(pos);
+		if (!newState.hasProperty(LavalogPropUtil.LAVALOGGED)) {
 			return;
-		} else {
-			cir.setReturnValue(state.with(LAVALOGGED,false));
+		}
+		FluidState fluid = level.getFluidState(pos);
+		if (fluid.getType() == Fluids.LAVA
+				&& newState.getValue(SlabBlock.TYPE) != SlabType.DOUBLE) {
+			cir.setReturnValue(newState.setValue(LavalogPropUtil.LAVALOGGED, true));
+			return;
+		}
+		if (newState.getValue(SlabBlock.TYPE) == SlabType.DOUBLE
+				&& existing.hasProperty(LavalogPropUtil.LAVALOGGED)
+				&& existing.getValue(LavalogPropUtil.LAVALOGGED)) {
+			cir.setReturnValue(newState.setValue(LavalogPropUtil.LAVALOGGED, false));
 			return;
 		}
 	}
 
-	@Inject(method = "getStateForNeighborUpdate", at = @At("TAIL"))
-	private void lavalogNeighbor(BlockState state, WorldView world, ScheduledTickView tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, Random random, CallbackInfoReturnable<BlockState> cir) {
-		if (state.contains(LAVALOGGED) && state.get(LAVALOGGED)) {
-			tickView.scheduleFluidTick(pos, Fluids.LAVA, Fluids.LAVA.getTickRate(world));
+	@Inject(method = "updateShape", at = @At("RETURN"), cancellable = true)
+	private void lavalogNeighbor(BlockState state, LevelReader reader, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random, CallbackInfoReturnable<BlockState> cir) {
+		BlockState result = cir.getReturnValue();
+		if (result.hasProperty(LavalogPropUtil.LAVALOGGED) && (Boolean)result.getValue(LavalogPropUtil.LAVALOGGED)) {
+			tickAccess.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(reader));
+		}
+		if (result.hasProperty(LavalogPropUtil.LAVALOGGED) && result.getValue(SlabBlock.TYPE) == SlabType.DOUBLE) {
+			cir.setReturnValue(result.setValue(LavalogPropUtil.LAVALOGGED, false));
 		}
 	}
 
-	@Inject(method = "canFillWithFluid", at = @At("HEAD"), cancellable = true)
-	private void canFillFixed(@Nullable PlayerEntity player, BlockView world, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> cir) {
-		if (fluid == Fluids.LAVA && state.contains(LAVALOGGED) && BlockListRegistry.isAllowed(state.getBlock()) && !state.get(LAVALOGGED) && !state.get(Properties.WATERLOGGED)) {
-			if (state.get(Properties.SLAB_TYPE) != SlabType.DOUBLE) cir.setReturnValue(true);
+	@Inject(method = "canPlaceLiquid", at = @At("HEAD"), cancellable = true)
+	private void canFillFixed(@Nullable LivingEntity player, BlockGetter world, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> cir) {
+		if (fluid == Fluids.LAVA && state.hasProperty(LavalogPropUtil.LAVALOGGED) && LavalogConfigLoader.BLOCKLIST.contains(state.getBlock()) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED) && state.getValue(SlabBlock.TYPE) != SlabType.DOUBLE) {
+			cir.setReturnValue(true);
 			return;
 		}
-		if (fluid == Fluids.WATER && state.contains(LAVALOGGED) && state.get(LAVALOGGED)) {
+		if (fluid == Fluids.WATER && state.hasProperty(LavalogPropUtil.LAVALOGGED) && state.getValue(LavalogPropUtil.LAVALOGGED)) {
 			cir.setReturnValue(false);
 		}
 	}
-	
-	@Inject(method = "tryFillWithFluid", at = @At("HEAD"), cancellable = true)
-	private void tryFillFixed(WorldAccess world, BlockPos pos, BlockState state, FluidState fluidState, CallbackInfoReturnable<Boolean> cir) {
-		if (fluidState.getFluid() == Fluids.LAVA && state.contains(LAVALOGGED) && BlockListRegistry.isAllowed(state.getBlock()) && !state.get(LAVALOGGED) && !state.get(Properties.WATERLOGGED)) {
-			if (state.get(Properties.SLAB_TYPE) != SlabType.DOUBLE) {
-				if (!world.isClient()) {
-					world.setBlockState(pos, state.with(LAVALOGGED, true), Block.NOTIFY_ALL);
-					world.scheduleFluidTick(pos, Fluids.LAVA, Fluids.LAVA.getTickRate(world));
+
+	@Inject(method = "placeLiquid", at = @At("HEAD"), cancellable = true)
+	private void tryFillFixed(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState, CallbackInfoReturnable<Boolean> cir) {
+		if (fluidState.getType() == Fluids.LAVA && state.hasProperty(LavalogPropUtil.LAVALOGGED) && LavalogConfigLoader.BLOCKLIST.contains(state.getBlock()) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
+			if (state.getValue(BlockStateProperties.SLAB_TYPE) != SlabType.DOUBLE) {
+				if (!level.isClientSide()) {
+					level.setBlock(pos, state.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
+					level.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(level));
 				}
 				cir.setReturnValue(true);
 				return;
 			}
 		}
-		if (fluidState.getFluid() == Fluids.WATER && state.contains(Properties.WATERLOGGED) && !state.get(LAVALOGGED) && !state.get(Properties.WATERLOGGED)) {
-			if (state.get(Properties.SLAB_TYPE) != SlabType.DOUBLE) {
-				if (!world.isClient()) {
-					world.setBlockState(pos, state.with(Properties.WATERLOGGED, true), Block.NOTIFY_ALL);
-					world.scheduleFluidTick(pos, Fluids.WATER, Fluids.WATER.getTickRate(world));
+		if (fluidState.getType() == Fluids.WATER && state.hasProperty(BlockStateProperties.WATERLOGGED) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
+			if (state.getValue(BlockStateProperties.SLAB_TYPE) != SlabType.DOUBLE) {
+				if (!level.isClientSide()) {
+					level.setBlock(pos, state.setValue(BlockStateProperties.WATERLOGGED, true), 3);
+					level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
 				}
 				cir.setReturnValue(true);
 				return;
 			}
 		}
-	}
-
-	@Override
-	public ItemStack tryDrainFluid(@Nullable PlayerEntity player, WorldAccess world, BlockPos pos, BlockState state) {
-		if (state.get(LAVALOGGED)) {
-			world.setBlockState(pos, state.with(LAVALOGGED, false), Block.NOTIFY_ALL);
-			if (!state.canPlaceAt(world, pos)) {
-				world.breakBlock(pos, true);
-			}
-			return new ItemStack(Items.LAVA_BUCKET);
-		}
-		if (state.get(Properties.WATERLOGGED)) {
-			world.setBlockState(pos, state.with(Properties.WATERLOGGED,false), Block.NOTIFY_ALL);
-			if (!state.canPlaceAt(world, pos)) {
-				world.breakBlock(pos, true);
-			}
-			return new ItemStack(Items.WATER_BUCKET);
-		}
-		return ItemStack.EMPTY;
-	}
-
-	@Shadow protected static VoxelShape BOTTOM_SHAPE;
-	@Shadow protected static VoxelShape TOP_SHAPE;
-
-	@Inject(method = "getOutlineShape", at = @At("HEAD"),cancellable = true)
-	private void handleLavalogged(BlockState state, BlockView world, BlockPos pos, ShapeContext context, CallbackInfoReturnable<VoxelShape> cir) {
-		if (state.contains(LAVALOGGED)) {
-			SlabType type = state.get(Properties.SLAB_TYPE);
-			switch (type) {
-				case DOUBLE -> cir.setReturnValue(VoxelShapes.fullCube());
-				case TOP    -> cir.setReturnValue(TOP_SHAPE);
-				default     -> cir.setReturnValue(BOTTOM_SHAPE);
-			}
-		}
-
 	}
 
 	@Inject(method = "getFluidState", at = @At("RETURN"), cancellable = true)
 	private void fixFluidGetting(BlockState state, CallbackInfoReturnable<FluidState> cir) {
-		if (state.contains(LAVALOGGED) && state.get(LAVALOGGED)) {
-			cir.setReturnValue(Fluids.LAVA.getStill(false));
+		if (state.hasProperty(LavalogPropUtil.LAVALOGGED) && state.getValue(LavalogPropUtil.LAVALOGGED)) {
+			cir.setReturnValue(Fluids.LAVA.getSource(true));
 			return;
 		}
-		if (state.contains(Properties.WATERLOGGED) && state.get(Properties.WATERLOGGED)) {
-			cir.setReturnValue(Fluids.WATER.getStill(false));
+		if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED)) {
+			cir.setReturnValue(Fluids.WATER.getSource(true));
 			return;
 		}
 	}
