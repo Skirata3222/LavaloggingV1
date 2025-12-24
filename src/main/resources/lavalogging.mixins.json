@@ -9,6 +9,7 @@
 		"BucketItemInvoker",
 		"BucketItemMixin",
 		"ItemRaycastInvoker",
+		"SimpleWaterloggedBlockMixin",
 		"SlabBlockMixin",
 		"StairBlockMixin",
 		"WallBlockMixin"

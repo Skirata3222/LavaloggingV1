@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
+
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
@@ -18,8 +19,10 @@ import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+
 import net.skirata3222.lavalogging.util.LavalogConfigLoader;
 import net.skirata3222.lavalogging.util.LavalogPropUtil;
 
@@ -63,6 +66,18 @@ public abstract class WallBlockMixin {
 	private void lavalogNeighbor(BlockState state, LevelReader reader, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random, CallbackInfoReturnable<BlockState> cir) {
 		if (state.hasProperty(LavalogPropUtil.LAVALOGGED) && (Boolean)state.getValue(LavalogPropUtil.LAVALOGGED)) {
 			tickAccess.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(reader));
+		}
+	}
+
+	@Inject(method = "getFluidState", at = @At("RETURN"), cancellable = true)
+	private void fixFluidGetting(BlockState state, CallbackInfoReturnable<FluidState> cir) {
+		if (state.hasProperty(LavalogPropUtil.LAVALOGGED) && state.getValue(LavalogPropUtil.LAVALOGGED)) {
+			cir.setReturnValue(Fluids.LAVA.getSource(true));
+			return;
+		}
+		if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED)) {
+			cir.setReturnValue(Fluids.WATER.getSource(true));
+			return;
 		}
 	}
 

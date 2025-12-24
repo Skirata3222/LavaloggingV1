@@ -75,6 +75,41 @@ public abstract class BucketItemMixin {
 			return;
 		}
 
+		BlockPos placementPos = pos.relative(hit.getDirection());
+		BlockState placementState = level.getBlockState(placementPos);
+		Block placementBlock = placementState.getBlock();
+
+		if (placementState.hasProperty(LavalogPropUtil.LAVALOGGED)) {
+
+			if (fluid == Fluids.LAVA && placementState.hasProperty(LavalogPropUtil.LAVALOGGED) && placementState.getValue(LavalogPropUtil.LAVALOGGED)) {
+				cir.setReturnValue(InteractionResult.FAIL);
+				return;
+			}
+			if (fluid == Fluids.LAVA && (placementBlock instanceof LiquidBlockContainer block2) && block2.canPlaceLiquid(user, level, placementPos, placementState, fluid)) {
+
+				if (!level.isClientSide()) {
+					level.setBlock(placementPos, placementState.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
+					level.scheduleTick(placementPos, Fluids.LAVA, Fluids.LAVA.getTickDelay(level));
+				}
+				if (!user.getAbilities().instabuild) {
+					user.setItemInHand(hand, new ItemStack(Items.BUCKET));
+				}
+				
+				((BucketItemInvoker)(Object)this).invokePlayEmptySound(user, level, placementPos);
+
+				cir.setReturnValue(InteractionResult.SUCCESS);
+				return;
+			}
+
+			if (fluid == Fluids.WATER
+					&& placementState.hasProperty(LavalogPropUtil.LAVALOGGED)
+					&& placementState.getValue(LavalogPropUtil.LAVALOGGED)) {
+				cir.setReturnValue(InteractionResult.FAIL);
+				return;
+			}
+
+		}
+
 		if (self.getContent() == Fluids.EMPTY
 		&& state.hasProperty(LavalogPropUtil.LAVALOGGED)
 		&& state.getValue(LavalogPropUtil.LAVALOGGED)) {
