@@ -8,11 +8,15 @@
 		"BlockInvoker",
 		"BucketItemInvoker",
 		"BucketItemMixin",
+		"CrossCollisionBlockMixin",
+		"FenceBlockMixin",
+		"IronBarsBlockMixin",
 		"ItemRaycastInvoker",
 		"SimpleWaterloggedBlockMixin",
 		"SlabBlockMixin",
 		"StairBlockMixin",
-		"WallBlockMixin"
+		"WallBlockMixin",
+		"WaterloggedTransparentBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

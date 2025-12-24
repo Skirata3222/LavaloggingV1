@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.WallBlock;
@@ -30,7 +31,7 @@ public interface SimpleWaterloggedBlockMixin {
 	private void fixCanPlaceLiquid(@Nullable LivingEntity player, BlockGetter getter, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> cir) {
 		Block block = state.getBlock();
 
-		if (block instanceof WallBlock || block instanceof FenceBlock) {
+		if (block instanceof WallBlock || block instanceof CrossCollisionBlock) {
 			if (fluid == Fluids.LAVA && state.hasProperty(LavalogPropUtil.LAVALOGGED) && LavalogConfigLoader.BLOCKLIST.contains(state.getBlock()) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
 				cir.setReturnValue(true);
 			}
@@ -44,15 +45,15 @@ public interface SimpleWaterloggedBlockMixin {
 	private void fixPlaceLiquid(LevelAccessor world, BlockPos pos, BlockState state, FluidState fluidState, CallbackInfoReturnable<Boolean> cir) {
 		Block block = state.getBlock();
 
-		if (block instanceof WallBlock || block instanceof FenceBlock) {
-			if (fluidState.getType() == Fluids.LAVA && state.hasProperty(LavalogPropUtil.LAVALOGGED) && LavalogConfigLoader.BLOCKLIST.contains(state.getBlock()) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
+		if ((block instanceof WallBlock || block instanceof CrossCollisionBlock) && state.hasProperty(LavalogPropUtil.LAVALOGGED)) {
+			if (fluidState.getType() == Fluids.LAVA && LavalogConfigLoader.BLOCKLIST.contains(state.getBlock()) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
 				if (!world.isClientSide()) {
 					world.setBlock(pos, state.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
 					world.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(world));
 				}
 				cir.setReturnValue(true);
 			}
-			if (fluidState.getType() == Fluids.WATER && state.hasProperty(LavalogPropUtil.LAVALOGGED) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
+			if (fluidState.getType() == Fluids.WATER && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
 				if (!world.isClientSide()) {
 					world.setBlock(pos, state.setValue(BlockStateProperties.WATERLOGGED, true), 3);
 					world.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(world));
