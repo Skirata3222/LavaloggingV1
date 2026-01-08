@@ -13,8 +13,10 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.PointedDripstoneBlock;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.WallBlock;
+import net.minecraft.world.level.block.WaterloggedTransparentBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
@@ -31,7 +33,7 @@ public interface SimpleWaterloggedBlockMixin {
 	private void fixCanPlaceLiquid(@Nullable LivingEntity player, BlockGetter getter, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> cir) {
 		Block block = state.getBlock();
 
-		if (block instanceof WallBlock || block instanceof CrossCollisionBlock) {
+		if (block instanceof WallBlock || block instanceof CrossCollisionBlock || block instanceof WaterloggedTransparentBlock || block instanceof PointedDripstoneBlock) {
 			if (fluid == Fluids.LAVA && state.hasProperty(LavalogPropUtil.LAVALOGGED) && LavalogConfigLoader.BLOCKLIST.contains(state.getBlock()) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
 				cir.setReturnValue(true);
 			}
@@ -45,7 +47,7 @@ public interface SimpleWaterloggedBlockMixin {
 	private void fixPlaceLiquid(LevelAccessor world, BlockPos pos, BlockState state, FluidState fluidState, CallbackInfoReturnable<Boolean> cir) {
 		Block block = state.getBlock();
 
-		if ((block instanceof WallBlock || block instanceof CrossCollisionBlock) && state.hasProperty(LavalogPropUtil.LAVALOGGED)) {
+		if ((block instanceof WallBlock || block instanceof CrossCollisionBlock || block instanceof WaterloggedTransparentBlock || block instanceof PointedDripstoneBlock) && state.hasProperty(LavalogPropUtil.LAVALOGGED)) {
 			if (fluidState.getType() == Fluids.LAVA && LavalogConfigLoader.BLOCKLIST.contains(state.getBlock()) && !state.getValue(LavalogPropUtil.LAVALOGGED) && !state.getValue(BlockStateProperties.WATERLOGGED)) {
 				if (!world.isClientSide()) {
 					world.setBlock(pos, state.setValue(LavalogPropUtil.LAVALOGGED, true), 3);

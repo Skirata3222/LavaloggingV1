@@ -15,6 +15,8 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BucketPickup;
+import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,7 +29,7 @@ import net.skirata3222.lavalogging.util.LavalogConfigLoader;
 import net.skirata3222.lavalogging.util.LavalogPropUtil;
 
 @Mixin(WallBlock.class)
-public abstract class WallBlockMixin {
+public abstract class WallBlockMixin implements LiquidBlockContainer, BucketPickup {
 
 	@Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
 	private void addLavaloggedProperty(StateDefinition.Builder<Block,BlockState> builder, CallbackInfo ci) {

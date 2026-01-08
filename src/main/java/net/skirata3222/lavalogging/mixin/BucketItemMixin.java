@@ -45,82 +45,80 @@ public abstract class BucketItemMixin {
 			return;
 		}
 		BlockPos pos = hit.getBlockPos();
-		BlockState state = level.getBlockState(pos);
-		Block block = state.getBlock();
+		// BlockState state = level.getBlockState(pos);
+		// Block block = state.getBlock();
+		BlockPos adjPos = pos.relative(hit.getDirection());
+		BlockState adjState = level.getBlockState(adjPos);
+		Block adjBlock = adjState.getBlock();
+		BlockPos targetPos = user.isShiftKeyDown() ? adjPos : pos;
+		BlockState targetState = level.getBlockState(targetPos);
+		Block targetBlock = targetState.getBlock();
 
-		if (fluid == Fluids.LAVA && state.hasProperty(LavalogPropUtil.LAVALOGGED) && state.getValue(LavalogPropUtil.LAVALOGGED)) {
-			cir.setReturnValue(InteractionResult.FAIL);
-			return;
-		}
-		if (fluid == Fluids.LAVA && (block instanceof LiquidBlockContainer block2) && block2.canPlaceLiquid(user, level, pos, state, fluid)) {
-
-			if (!level.isClientSide()) {
-				level.setBlock(pos, state.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
-				level.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(level));
-			}
-			if (!user.getAbilities().instabuild) {
-				user.setItemInHand(hand, new ItemStack(Items.BUCKET));
-			}
-			
-			((BucketItemInvoker)(Object)this).invokePlayEmptySound(user, level, pos);
-
-			cir.setReturnValue(InteractionResult.SUCCESS);
-			return;
-		}
-
-		if (fluid == Fluids.WATER
-				&& state.hasProperty(LavalogPropUtil.LAVALOGGED)
-				&& state.getValue(LavalogPropUtil.LAVALOGGED)) {
-			cir.setReturnValue(InteractionResult.FAIL);
-			return;
-		}
-
-		BlockPos placementPos = pos.relative(hit.getDirection());
-		BlockState placementState = level.getBlockState(placementPos);
-		Block placementBlock = placementState.getBlock();
-
-		if (placementState.hasProperty(LavalogPropUtil.LAVALOGGED)) {
-
-			if (fluid == Fluids.LAVA && placementState.hasProperty(LavalogPropUtil.LAVALOGGED) && placementState.getValue(LavalogPropUtil.LAVALOGGED)) {
+		
+		
+		if (fluid == Fluids.LAVA && targetState.hasProperty(LavalogPropUtil.LAVALOGGED)) {
+			if (targetState.getValue(LavalogPropUtil.LAVALOGGED)) {
 				cir.setReturnValue(InteractionResult.FAIL);
 				return;
 			}
-			if (fluid == Fluids.LAVA && (placementBlock instanceof LiquidBlockContainer block2) && block2.canPlaceLiquid(user, level, placementPos, placementState, fluid)) {
 
+			if (((LiquidBlockContainer)targetBlock).canPlaceLiquid(user, level, targetPos, targetState, fluid)) {
 				if (!level.isClientSide()) {
-					level.setBlock(placementPos, placementState.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
-					level.scheduleTick(placementPos, Fluids.LAVA, Fluids.LAVA.getTickDelay(level));
+					level.setBlock(targetPos, targetState.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
+					level.scheduleTick(targetPos, Fluids.LAVA, Fluids.LAVA.getTickDelay(level));
 				}
 				if (!user.getAbilities().instabuild) {
 					user.setItemInHand(hand, new ItemStack(Items.BUCKET));
 				}
 				
-				((BucketItemInvoker)(Object)this).invokePlayEmptySound(user, level, placementPos);
+				((BucketItemInvoker)(Object)this).invokePlayEmptySound(user, level, targetPos);
 
 				cir.setReturnValue(InteractionResult.SUCCESS);
 				return;
 			}
+		}
 
-			if (fluid == Fluids.WATER
-					&& placementState.hasProperty(LavalogPropUtil.LAVALOGGED)
-					&& placementState.getValue(LavalogPropUtil.LAVALOGGED)) {
+		if (fluid == Fluids.LAVA && adjState.hasProperty(LavalogPropUtil.LAVALOGGED)) {
+			// if we're targetting a block and its not lavaloggable (or already lavalogged) but the one next to it is, attempt to lavalog the one next to it
+			if (adjState.getValue(LavalogPropUtil.LAVALOGGED)) {
 				cir.setReturnValue(InteractionResult.FAIL);
 				return;
 			}
 
+			if (((LiquidBlockContainer)adjBlock).canPlaceLiquid(user, level, adjPos, adjState, fluid)) {
+				if (!level.isClientSide()) {
+					level.setBlock(adjPos, adjState.setValue(LavalogPropUtil.LAVALOGGED, true), 3);
+					level.scheduleTick(adjPos, Fluids.LAVA, Fluids.LAVA.getTickDelay(level));
+				}
+				if (!user.getAbilities().instabuild) {
+					user.setItemInHand(hand, new ItemStack(Items.BUCKET));
+				}
+				
+				((BucketItemInvoker)(Object)this).invokePlayEmptySound(user, level, adjPos);
+
+				cir.setReturnValue(InteractionResult.SUCCESS);
+				return;
+			}
+		}
+
+		if (fluid == Fluids.WATER
+				&& targetState.hasProperty(LavalogPropUtil.LAVALOGGED)
+				&& targetState.getValue(LavalogPropUtil.LAVALOGGED)) {
+			cir.setReturnValue(InteractionResult.FAIL);
+			return;
 		}
 
 		if (self.getContent() == Fluids.EMPTY
-		&& state.hasProperty(LavalogPropUtil.LAVALOGGED)
-		&& state.getValue(LavalogPropUtil.LAVALOGGED)) {
+		&& targetState.hasProperty(LavalogPropUtil.LAVALOGGED)
+		&& targetState.getValue(LavalogPropUtil.LAVALOGGED)) {
 
 			if (!level.isClientSide()) {
-				level.setBlock(pos, state.setValue(LavalogPropUtil.LAVALOGGED, false), 3);
+				level.setBlock(targetPos, targetState.setValue(LavalogPropUtil.LAVALOGGED, false), 3);
 				if (!user.getAbilities().instabuild) {
 					user.setItemInHand(hand, new ItemStack(Items.LAVA_BUCKET));
 				}
 			}
-			level.playSound(user,pos,SoundEvents.BUCKET_FILL_LAVA,SoundSource.BLOCKS,1.0F,1.0F);
+			level.playSound(user,targetPos,SoundEvents.BUCKET_FILL_LAVA,SoundSource.BLOCKS,1.0F,1.0F);
 			cir.setReturnValue(InteractionResult.SUCCESS);
 			return;
 		}
