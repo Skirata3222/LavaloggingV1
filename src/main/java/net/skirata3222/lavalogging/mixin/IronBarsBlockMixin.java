@@ -28,12 +28,12 @@ import net.skirata3222.lavalogging.util.LavalogPropUtil;
 @Mixin(IronBarsBlock.class)
 public abstract class IronBarsBlockMixin implements LiquidBlockContainer, BucketPickup {
 
-    @Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
+	@Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
 	private void addLavaloggedProperty(StateDefinition.Builder<Block,BlockState> builder, CallbackInfo ci) {
 		builder.add(LavalogPropUtil.LAVALOGGED);
 	}
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+	@Inject(method = "<init>", at = @At("TAIL"))
 	private void injectDefaultState(BlockBehaviour.Properties properties, CallbackInfo ci) {
 		Block self = (Block)(Object)this;
 		((BlockInvoker)self).invokeRegisterDefaultState(
@@ -43,7 +43,7 @@ public abstract class IronBarsBlockMixin implements LiquidBlockContainer, Bucket
 		);
 	}
 
-    @Inject(method = "getStateForPlacement", at = @At("TAIL"), cancellable = true)
+	@Inject(method = "getStateForPlacement", at = @At("TAIL"), cancellable = true)
 	private void injectLavaPlacement(BlockPlaceContext ctx, CallbackInfoReturnable<BlockState> cir) {
 		BlockState state = cir.getReturnValue();
 		FluidState fluidState = ctx.getLevel().getFluidState(ctx.getClickedPos());
@@ -56,7 +56,7 @@ public abstract class IronBarsBlockMixin implements LiquidBlockContainer, Bucket
 		}
 	}
 
-    @Inject(method = "updateShape", at = @At("RETURN"))
+	@Inject(method = "updateShape", at = @At("RETURN"))
 	private void lavalogNeighbor(BlockState state, LevelReader reader, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random, CallbackInfoReturnable<BlockState> cir) {
 		if (state.hasProperty(LavalogPropUtil.LAVALOGGED) && (Boolean)state.getValue(LavalogPropUtil.LAVALOGGED)) {
 			tickAccess.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(reader));

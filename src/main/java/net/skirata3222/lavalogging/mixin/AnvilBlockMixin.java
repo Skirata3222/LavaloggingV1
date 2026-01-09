@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+
 import net.skirata3222.lavalogging.util.LavalogConfigLoader;
 import net.skirata3222.lavalogging.util.LavalogPropUtil;
 
@@ -119,7 +120,7 @@ public abstract class AnvilBlockMixin implements LiquidBlockContainer, BucketPic
 	}
 
 	public Optional<SoundEvent> getPickupSound() {
-    	return Optional.of(SoundEvents.BUCKET_FILL);
+		return Optional.of(SoundEvents.BUCKET_FILL);
 	}
 
 

@@ -20,18 +20,19 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+
 import net.skirata3222.lavalogging.util.LavalogConfigLoader;
 import net.skirata3222.lavalogging.util.LavalogPropUtil;
 
 @Mixin(WaterloggedTransparentBlock.class)
 public abstract class WaterloggedTransparentBlockMixin {
 
-    @Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
+	@Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
 	private void addLavaloggedProperty(StateDefinition.Builder<Block,BlockState> builder, CallbackInfo ci) {
 		builder.add(LavalogPropUtil.LAVALOGGED);
 	}
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+	@Inject(method = "<init>", at = @At("TAIL"))
 	private void injectDefaultState(BlockBehaviour.Properties properties, CallbackInfo ci) {
 		Block self = (Block)(Object)this;
 		((BlockInvoker)self).invokeRegisterDefaultState(
@@ -54,7 +55,7 @@ public abstract class WaterloggedTransparentBlockMixin {
 		}
 	}
 
-    @Inject(method = "updateShape", at = @At("RETURN"))
+	@Inject(method = "updateShape", at = @At("RETURN"))
 	private void lavalogNeighbor(BlockState state, LevelReader reader, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random, CallbackInfoReturnable<BlockState> cir) {
 		if (state.hasProperty(LavalogPropUtil.LAVALOGGED) && (Boolean)state.getValue(LavalogPropUtil.LAVALOGGED)) {
 			tickAccess.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(reader));
@@ -73,5 +74,5 @@ public abstract class WaterloggedTransparentBlockMixin {
 			return;
 		}
 	}
-    
+	
 }

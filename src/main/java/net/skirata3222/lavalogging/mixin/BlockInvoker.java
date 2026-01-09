@@ -8,8 +8,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(Block.class)
 public interface BlockInvoker {
-    
-    @Invoker("registerDefaultState")
-    void invokeRegisterDefaultState(BlockState state);
+	
+	@Invoker("registerDefaultState")
+	void invokeRegisterDefaultState(BlockState state);
 
 }
