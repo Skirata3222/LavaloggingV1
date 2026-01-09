@@ -52,7 +52,137 @@ public class LavalogConfigLoader {
 		JsonArray blocks = new JsonArray();
 
 		blocks.add("minecraft:cobblestone_slab");
-		// add default blocks here
+		
+		blocks.add("minecraft:andesite_slab");
+		blocks.add("minecraft:andesite_stairs");
+		blocks.add("minecraft:andesite_wall");
+
+		blocks.add("minecraft:anvil");
+		blocks.add("minecraft:chipped_anvil");
+		blocks.add("minecraft:damaged_anvil");
+
+		blocks.add("minecraft:brick_slab");
+		blocks.add("minecraft:brick_stairs");
+		blocks.add("minecraft:brick_wall");
+
+		blocks.add("minecraft:cobblestone_slab");
+		blocks.add("minecraft:cobblestone_stairs");
+		blocks.add("minecraft:cobblestone_wall");
+
+		blocks.add("minecraft:copper_bars");
+		blocks.add("minecraft:exposed_copper_bars");
+		blocks.add("minecraft:weathered_copper_bars");
+		blocks.add("minecraft:oxidized_copper_bars");
+		blocks.add("minecraft:waxed_copper_bars");
+		blocks.add("minecraft:waxed_exposed_copper_bars");
+		blocks.add("minecraft:waxed_weathered_copper_bars");
+		blocks.add("minecraft:waxed_oxidized_copper_bars");
+
+		blocks.add("minecraft:copper_grate");
+		blocks.add("minecraft:exposed_copper_grate");
+		blocks.add("minecraft:weathered_copper_grate");
+		blocks.add("minecraft:oxidized_copper_grate");
+		blocks.add("minecraft:waxed_copper_grate");
+		blocks.add("minecraft:waxed_exposed_copper_grate");
+		blocks.add("minecraft:waxed_weathered_copper_grate");
+		blocks.add("minecraft:waxed_oxidized_copper_grate");
+
+		blocks.add("minecraft:cut_red_sandstone_slab");
+		blocks.add("minecraft:cut_sandstone_slab");
+
+		blocks.add("minecraft:deepslate_brick_slab");
+		blocks.add("minecraft:deepslate_brick_stairs");
+		blocks.add("minecraft:deepslate_brick_wall");
+
+		blocks.add("minecraft:deepslate_tile_slab");
+		blocks.add("minecraft:deepslate_tile_stairs");
+		blocks.add("minecraft:deepslate_tile_wall");
+
+		blocks.add("minecraft:diorite_slab");
+		blocks.add("minecraft:diorite_stairs");
+		blocks.add("minecraft:diorite_wall");
+
+		blocks.add("minecraft:end_stone_brick_slab");
+		blocks.add("minecraft:end_stone_brick_stairs");
+		blocks.add("minecraft:end_stone_brick_wall");
+
+		blocks.add("minecraft:granite_slab");
+		blocks.add("minecraft:granite_stairs");
+		blocks.add("minecraft:granite_wall");
+
+		blocks.add("minecraft:iron_bars");
+
+		blocks.add("minecraft:mossy_cobblestone_slab");
+		blocks.add("minecraft:mossy_cobblestone_stairs");
+		blocks.add("minecraft:mossy_cobblestone_wall");
+
+		blocks.add("minecraft:mossy_stone_brick_slab");
+		blocks.add("minecraft:mossy_stone_brick_stairs");
+		blocks.add("minecraft:mossy_stone_brick_wall");
+
+		blocks.add("minecraft:nether_brick_fence");
+		blocks.add("minecraft:nether_brick_slab");
+		blocks.add("minecraft:nether_brick_stairs");
+		blocks.add("minecraft:nether_brick_wall");
+
+		blocks.add("minecraft:pointed_dripstone");
+
+		blocks.add("minecraft:polished_andesite_slab");
+		blocks.add("minecraft:polished_andesite_stairs");
+
+		blocks.add("minecraft:polished_blackstone_brick_slab");
+		blocks.add("minecraft:polished_blackstone_brick_stairs");
+		blocks.add("minecraft:polished_blackstone_brick_wall");
+
+		blocks.add("minecraft:polished_blackstone_slab");
+		blocks.add("minecraft:polished_blackstone_stairs");
+		blocks.add("minecraft:polished_blackstone_wall");
+
+		blocks.add("minecraft:polished_diorite_slab");
+		blocks.add("minecraft:polished_diorite_stairs");
+
+		blocks.add("minecraft:polished_granite_slab");
+		blocks.add("minecraft:polished_granite_stairs");
+
+		blocks.add("minecraft:prismarine_brick_slab");
+		blocks.add("minecraft:prismarine_brick_stairs");
+
+		blocks.add("minecraft:prismarine_slab");
+		blocks.add("minecraft:prismarine_stairs");
+		blocks.add("minecraft:prismarine_wall");
+
+		blocks.add("minecraft:quartz_slab");
+		blocks.add("minecraft:quartz_stairs");
+
+		blocks.add("minecraft:red_nether_brick_slab");
+		blocks.add("minecraft:red_nether_brick_stairs");
+		blocks.add("minecraft:red_nether_brick_wall");
+
+		blocks.add("minecraft:red_sandstone_slab");
+		blocks.add("minecraft:red_sandstone_stairs");
+		blocks.add("minecraft:red_sandstone_wall");
+
+		blocks.add("minecraft:sandstone_slab");
+		blocks.add("minecraft:sandstone_stairs");
+		blocks.add("minecraft:sandstone_wall");
+
+		blocks.add("minecraft:smooth_quartz_slab");
+		blocks.add("minecraft:smooth_quartz_stairs");
+
+		blocks.add("minecraft:smooth_red_sandstone_slab");
+		blocks.add("minecraft:smooth_red_sandstone_stairs");
+
+		blocks.add("minecraft:smooth_sandstone_slab");
+		blocks.add("minecraft:smooth_sandstone_stairs");
+
+		blocks.add("minecraft:smooth_stone_slab");
+
+		blocks.add("minecraft:stone_brick_slab");
+		blocks.add("minecraft:stone_brick_stairs");
+		blocks.add("minecraft:stone_brick_wall");
+
+		blocks.add("minecraft:stone_slab");
+		blocks.add("minecraft:stone_stairs");
 
 		root.add("blocks", blocks);
 
