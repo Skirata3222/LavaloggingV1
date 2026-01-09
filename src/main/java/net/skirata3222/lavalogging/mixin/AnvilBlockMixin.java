@@ -10,17 +10,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BucketPickup;
+import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,7 +39,12 @@ import net.skirata3222.lavalogging.util.LavalogConfigLoader;
 import net.skirata3222.lavalogging.util.LavalogPropUtil;
 
 @Mixin(AnvilBlock.class)
-public abstract class AnvilBlockMixin implements LiquidBlockContainer, BucketPickup {
+public abstract class AnvilBlockMixin extends FallingBlock implements LiquidBlockContainer, BucketPickup {
+
+	public AnvilBlockMixin(Properties properties) {
+		super(properties);
+		//TODO Auto-generated constructor stub
+	}
 
 	@Inject(method = "createBlockStateDefinition", at = @At("TAIL"))
 	private void addLavaloggedProperty(StateDefinition.Builder<Block,BlockState> builder, CallbackInfo ci) {
@@ -61,6 +71,19 @@ public abstract class AnvilBlockMixin implements LiquidBlockContainer, BucketPic
 		if (fluidState.getType() == Fluids.WATER) {
 			cir.setReturnValue(state.trySetValue(BlockStateProperties.WATERLOGGED, true));
 		}
+	}
+
+	@Override
+	public BlockState updateShape(BlockState state, LevelReader reader, ScheduledTickAccess tickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+		if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED)) {
+			tickAccess.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(reader));
+		}
+		if (state.hasProperty(LavalogPropUtil.LAVALOGGED) && state.getValue(LavalogPropUtil.LAVALOGGED)) {
+			tickAccess.scheduleTick(pos, Fluids.LAVA, Fluids.LAVA.getTickDelay(reader));
+		}
+
+		// Call the inherited implementation
+		return super.updateShape(state, reader, tickAccess, pos, direction, neighborPos, neighborState, random);
 	}
 
 	@Override
